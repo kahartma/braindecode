@@ -223,7 +223,7 @@ def spectral_perturbation_correlation(
     ]
 
     # Compute FFT of inputs
-    fft_input = np.fft.rfft(np.fft.rfft(inputs.cpu().numpy(), n=inputs.shape[2], axis=2)
+    fft_input = np.fft.rfft(inputs.cpu().numpy(), n=inputs.shape[2], axis=2)
     amps = np.abs(fft_input)
     phases = np.angle(fft_input)
 
