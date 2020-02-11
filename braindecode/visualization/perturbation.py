@@ -217,13 +217,13 @@ def spectral_perturbation_correlation(
         use_shape.append(tmp)
     orig_preds_layers = [
         np.concatenate(
-            [orig_preds[o][l] for o in range(len(orig_preds))]
+            [orig_preds[o][l].cpu().numpy() for o in range(len(orig_preds))]
         ).reshape(use_shape[l])
         for l in range(n_layers)
     ]
 
     # Compute FFT of inputs
-    fft_input = np.fft.rfft(inputs, n=inputs.shape[2], axis=2)
+    fft_input = np.fft.rfft(np.fft.rfft(inputs.cpu().numpy(), n=inputs.shape[2], axis=2)
     amps = np.abs(fft_input)
     phases = np.angle(fft_input)
 
@@ -237,16 +237,17 @@ def spectral_perturbation_correlation(
         log.info("Compute perturbed complex inputs...")
         fft_pert = amps_pert * np.exp(1j * phases_pert)
         log.info("Compute perturbed real inputs...")
-        inputs_pert = np.fft.irfft(fft_pert, n=inputs.shape[2], axis=2).astype(
-            np.float32
-        )
+        inputs_pert = torch.FloatTensor(np.fft.irfft(fft_pert, n=inputs.shape[2], axis=2).astype(
+                np.float32
+        ))
+        inputs_pert = to_cuda(inputs_pert)
 
         # Calculate layer activations for perturbed inputs
         log.info("Compute new predictions...")
         new_preds = [pred_fn(inputs_pert[inds]) for inds in batch_inds]
         new_preds_layers = [
             np.concatenate(
-                [new_preds[o][l] for o in range(len(new_preds))]
+                [new_preds[o][l].cpu().numpy() for o in range(len(new_preds))]
             ).reshape(use_shape[l])
             for l in range(n_layers)
         ]
